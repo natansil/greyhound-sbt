@@ -18,7 +18,7 @@ import zio.{Cause, Chunk, Exit, Fiber, Has, Promise, RManaged, Ref, UIO, URIO, Z
 import scala.reflect.ClassTag
 
 trait BatchEventLoop[R] extends Resource[R] {
-  def state: UIO[EventLoopExposedState]
+  def state: UIO[BatchEventLoopExposedState]
 
   def rebalanceListener: RebalanceListener[Any]
 
@@ -40,7 +40,7 @@ private[greyhound] class BatchEventLoopImpl[R <: Has[_] : ClassTag](group: Group
 
   private val consumerAttributes = consumer.config.consumerAttributes
 
-  override def state: UIO[EventLoopExposedState] = elState.eventLoopState
+  override def state: UIO[BatchEventLoopExposedState] = elState.eventLoopState
 
   private def report(metric: GreyhoundMetric) = GreyhoundMetrics.report(metric).provide(capturedR)
 
@@ -237,7 +237,7 @@ object BatchEventLoop {
     }
 }
 
-case class EventLoopExposedState(running: Boolean, shutdown: Boolean, pendingRecords: Map[TopicPartition, Int], pausedPartitions: Set[TopicPartition]) {
+case class BatchEventLoopExposedState(running: Boolean, shutdown: Boolean, pendingRecords: Map[TopicPartition, Int], pausedPartitions: Set[TopicPartition]) {
   def paused = !running
 }
 
@@ -284,7 +284,7 @@ object BatchEventLoopMetric {
     )
 
   private def countsByPartition(records: Seq[ConsumerRecord[_, _]]) =
-    records.groupBy(r => s"${r.topic}#${r.partition}").mapValues(_.size)
+    records.groupBy(r => s"${r.topic}#${r.partition}").mapValues(_.size).toMap
 
   private def countsByPartition(records: Map[TopicPartition, Seq[Record]]) =
     records.map { case (tp, p) => s"${tp.topic}#${tp.partition}" -> p.size }
@@ -353,7 +353,7 @@ private[greyhound] class BatchEventLoopState(running: TRef[Boolean],
         _.partition { case (_, records) =>
           records.lastAttempt.exists(_.plus(backoff).isBefore(now.toInstant))
         }).map { case (ready, notReady) =>
-        ready.mapValues(_.records) -> notReady
+        ready.mapValues(_.records).toMap -> notReady
       }
     }
 
@@ -377,9 +377,9 @@ private[greyhound] class BatchEventLoopState(running: TRef[Boolean],
   def eventLoopState = for {
     rn <- isRunning
     sd <- shutdownRef.get
-    pending <- allPending.map(_.mapValues(_.size))
+    pending <- allPending.map(_.mapValues(_.size).toMap)
     paused <- pausedPartitions
-  } yield EventLoopExposedState(rn, sd, pending, paused)
+  } yield BatchEventLoopExposedState(rn, sd, pending, paused)
 
   def pausedPartitions = pausedPartitionsRef.get
 

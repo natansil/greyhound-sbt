@@ -108,7 +108,7 @@ object Producer {
           effectBlocking(
             producer.partitionsFor(topic)
               .asScala
-              .map(PartitionInfo.apply)
+              .map(PartitionInfo.apply).toSeq
           )
         }
       }

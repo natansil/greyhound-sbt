@@ -36,7 +36,7 @@ class BatchEventLoopTest extends JUnitRunnableSpec {
             metrics <- TestMetrics.reported
           } yield {
             assert(handledRecords)(containsRecordsByPartition(consumerRecords)) &&
-              assert(offsets)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max))) &&
+              assert(offsets)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max).toMap)) &&
               assert(metrics)(exists(isRecordsHandledMetric(topics, group, clientId))) &&
               assert(metrics)(exists(isBatchHandledMetric(group, clientId)))
           }
@@ -59,7 +59,7 @@ class BatchEventLoopTest extends JUnitRunnableSpec {
             state <- loop.state
           } yield {
             assert(handledRecords)(equalTo(Vector(consumerRecords.filterNot(_.partition == 0)))) &&
-              assert(offsets)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max))) &&
+              assert(offsets)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max).toMap)) &&
               assert(state.pendingRecords.values.sum)(equalTo(0))
           }
         }
@@ -93,11 +93,11 @@ class BatchEventLoopTest extends JUnitRunnableSpec {
             } yield {
               val goodRecords = consumerRecords.filterNot(_.partition == 0)
               assert(handled1)(equalTo(Vector(goodRecords))) &&
-                assert(offsets1)(equalTo(goodRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max))) &&
+                assert(offsets1)(equalTo(goodRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max).toMap)) &&
                 assert(state1.pendingRecords.values.sum)(equalTo(goodRecords.size)) &&
                 // -- after partition 0 handling succeeds
                 assert(handled2)(containsRecordsByPartition(consumerRecords)) &&
-                assert(offsets2)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max))) &&
+                assert(offsets2)(equalTo(consumerRecords.groupBy(_.topicPartition).mapValues(_.map(_.offset + 1).max).toMap)) &&
                 assert(state2.pendingRecords.values.sum)(equalTo(0))
             }
           }

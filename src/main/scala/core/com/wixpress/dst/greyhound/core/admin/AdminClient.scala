@@ -200,7 +200,7 @@ object AdminClient {
               val topicPartitionsMap = members.flatMap(_.assignment().topicPartitions().asScala)
               GroupState(topicPartitionsMap.map(TopicPartition(_)).toSet)
             }
-            )
+            ).toMap
           } yield groupState
 
         override def deleteTopic(topic: Topic): RIO[Blocking, Unit] = {
@@ -212,7 +212,7 @@ object AdminClient {
           for {
             desc <- effectBlocking(client.describeConsumerGroups(groupIds.asJava).all())
             all <- desc.asZio
-          } yield all.asScala.toMap.mapValues(ConsumerGroupDescription.apply)
+          } yield all.asScala.toMap.mapValues(ConsumerGroupDescription.apply).toMap
         }
 
         override def consumerGroupOffsets(groupId: Group, onlyPartitions: Option[Set[TopicPartition]] = None): RIO[Blocking, Map[TopicPartition, Offset]] = {
