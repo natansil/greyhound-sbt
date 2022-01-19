@@ -37,10 +37,13 @@ object TestMetrics {
     ZLayer.fromFunctionManyManaged[R, Nothing, TestMetrics](a => make(andAlso(a)))
 
   def queue: URIO[TestMetrics, Queue[GreyhoundMetric]] =
-    ZIO.access[TestMetrics](_.get.queue)
+    ZIO.access[Has[TestMetrics.Service]](x => {
+      val value: TestMetrics.Service = x.get
+      value.queue
+    })
 
   def reported: URIO[TestMetrics, List[GreyhoundMetric]] =
-    ZIO.accessM[TestMetrics](_.get.reported)
+    ZIO.accessM[Has[TestMetrics.Service]](_.get.reported)
 
   def reportedOf[T <: GreyhoundMetric: ClassTag](filter: T => Boolean = (_:T) => true): URIO[TestMetrics, List[T]] =
     reported.map(ms => ms.collect {

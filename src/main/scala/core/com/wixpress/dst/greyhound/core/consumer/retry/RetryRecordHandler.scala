@@ -6,6 +6,7 @@ import com.wixpress.dst.greyhound.core.zioutils.AwaitShutdown
 import com.wixpress.dst.greyhound.core.consumer.domain.{ConsumerRecord, ConsumerSubscription, RecordHandler}
 import com.wixpress.dst.greyhound.core.metrics.GreyhoundMetrics
 import com.wixpress.dst.greyhound.core.producer.ProducerR
+import com.wixpress.dst.greyhound.core.consumer.retry.{Blocking => RetryBlocking}
 import zio._
 import zio.blocking.Blocking
 import zio.clock.Clock
@@ -44,7 +45,7 @@ object RetryRecordHandler {
             retryConfig.retryType(originalTopic.getOrElse(record.topic)) match {
               case BlockingFollowedByNonBlocking => blockingAndNonBlockingHandler.handle(record)
               case NonBlocking => nonBlockingHandler.handle(record)
-              case Blocking => blockingHandler.handle(record)
+              case RetryBlocking => blockingHandler.handle(record)
               case NoRetries => handler.handle(record).ignore
             }
           }

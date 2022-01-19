@@ -77,7 +77,7 @@ private[retry] object BlockingRetryRecordHandler {
       def maybeBackToStateBlocking =
         blockingState.modify(state => state.get(TopicPartitionTarget(topicPartition)).map {
           case IgnoringOnce => ((), state.updated(TopicPartitionTarget(topicPartition), InternalBlocking))
-          case _: Blocked[V, K] => ((), state.updated(TopicPartitionTarget(topicPartition), InternalBlocking))
+          case _: Blocked[_, _] => ((), state.updated(TopicPartitionTarget(topicPartition), InternalBlocking))
           case _ => ((), state)
         }.getOrElse(((), state)))
 

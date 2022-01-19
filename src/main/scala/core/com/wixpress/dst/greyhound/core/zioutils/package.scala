@@ -25,7 +25,7 @@ package object zioutils {
     )
 
     def fromRuntime = ZIO.runtime[Any].flatMap(_.platform.supervisor.value.map {
-      case v: Chunk[Fiber.Runtime[Any, Any]] if v.isEmpty || v.head.isInstanceOf[Fiber.Runtime[Any, Any]] => v
+      case v: Chunk[Fiber.Runtime[_, _]] if v.isEmpty || v.head.isInstanceOf[Fiber.Runtime[_, _]] => v
       case _ => Chunk.empty
     })
   }

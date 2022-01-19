@@ -22,12 +22,12 @@ object BlockingStateResolver {
               case IgnoringAll => IgnoringAll
               case IgnoringOnce => IgnoringOnce
               case InternalBlocking => InternalBlocking
-              case b: Blocked[V, K] => b
+              case b: Blocked[_, _] => b
               case _ => InternalBlocking
             }.getOrElse(topicBlockingState)
             val shouldBlock = shouldBlockFrom(mergedBlockingState)
             val isBlockedAlready = mergedBlockingState match {
-              case _: BlockingState.Blocked[K, V] => true
+              case _: BlockingState.Blocked[_, _] => true
               case _ => false
             }
             val updatedState = if (shouldBlock && !isBlockedAlready) {
@@ -48,7 +48,7 @@ object BlockingStateResolver {
           blockingStateRef.modify(prevState => {
             val previouslyBlocked = prevState.get(TopicPartitionTarget(topicPartition)).exists {
               case InternalBlocking => true
-              case _: Blocked[Chunk[Byte], Chunk[Byte]] => true
+              case _: Blocked[_, _] => true
               case _ => false
             }
             if (previouslyBlocked)

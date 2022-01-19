@@ -1,3 +1,9 @@
+ThisBuild / scalafixDependencies +=
+  "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0"
+ThisBuild / scalafixDependencies += "org.scala-lang.modules" %% "scala-collection-migrations" % "2.6.0"
+addCompilerPlugin(scalafixSemanticdb)
+scalacOptions ++= List("-Yrangepos", "-P:semanticdb:synthetics:on")
+
 lazy val root = project
   .in(file("."))
   .settings(
@@ -5,9 +11,10 @@ lazy val root = project
     version := "0.1.0-SNAPSHOT",
 
     scalaVersion := "2.13.8",
-//    scalaVersion := "2.12.12",
+//    scalaVersion := "2.12.15",
 
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
       "com.novocode" % "junit-interface" % "0.11" % "test",
       "org.specs2" %% "specs2-junit" %  "4.8.3" % "test",
       "dev.zio" %% "zio-test-junit" % "1.0.9" % "test",

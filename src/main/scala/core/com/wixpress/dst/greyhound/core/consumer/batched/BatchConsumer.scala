@@ -134,7 +134,7 @@ object BatchConsumer {
   }
 }
 
-case class BatchConsumerExposedState(eventLoopState: EventLoopExposedState, clientId: ClientId, assignment: Set[TopicPartition]) {
+case class BatchConsumerExposedState(eventLoopState: BatchEventLoopExposedState, clientId: ClientId, assignment: Set[TopicPartition]) {
   def topics = assignment.map(_.topic)
 }
 
