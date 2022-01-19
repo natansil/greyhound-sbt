@@ -1,18 +1,11 @@
-//Test / sourceDirectories := baseDirectory { base =>
-//  Seq(
-//    base / "src/test/scala"
-//  )
-//}.value
-
-
 lazy val root = project
   .in(file("."))
   .settings(
     name := "greyhound-2.13-sbt",
     version := "0.1.0-SNAPSHOT",
 
-//    scalaVersion := "2.13.8",
-    scalaVersion := "2.12.12",
+    scalaVersion := "2.13.8",
+//    scalaVersion := "2.12.12",
 
     libraryDependencies ++= Seq(
       "com.novocode" % "junit-interface" % "0.11" % "test",
