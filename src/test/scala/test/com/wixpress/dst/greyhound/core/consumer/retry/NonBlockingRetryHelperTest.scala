@@ -1,22 +1,24 @@
 package com.wixpress.dst.greyhound.core.consumer.retry
 
+import com.wixpress.dst.greyhound.core.Topic
+
 import java.nio.charset.StandardCharsets
 import java.time.Instant
-
 import com.wixpress.dst.greyhound.core.consumer.domain.ConsumerSubscription.topics
 import com.wixpress.dst.greyhound.core.consumer.retry.RetryDecision.RetryWith
 import com.wixpress.dst.greyhound.core.testkit.BaseTest
 import com.wixpress.dst.greyhound.core.testkit.Maker.abytesRecord
-import zio.duration._
+import org.specs2.matcher.Matcher
+import zio.duration.*
 import zio.test.environment.TestEnvironment
-import zio._
+import zio.*
 
-class NonBlockingRetryHelperTest  extends BaseTest[TestEnvironment] {
+class NonBlockingRetryHelperTest  extends BaseTest[TestEnvironment]{
 
   "NonBlockingRetryHelper" should {
     "retryTopicsFor should not contain original topic" in {
       val topic = "some-topic"
-      NonBlockingRetryHelper("group",None).retryTopicsFor(topic) must not(contain(topic))
+      NonBlockingRetryHelper("group",None).retryTopicsFor(topic) must not(containInSetMatcher(topic))
     }
     
     "retryDecision should produce add a 'current RetryAttempt' header to ProducerRecord" in {
@@ -46,6 +48,10 @@ class NonBlockingRetryHelperTest  extends BaseTest[TestEnvironment] {
         attempt <- makeString(maybeHeader)
       } yield attempt === "0"
     }
+  }
+
+  private def containInSetMatcher(topic: Topic): Matcher[Set[Topic]] = {
+    contain(topic)
   }
 
   override def env: UManaged[TestEnvironment] = test.environment.testEnvironment.build

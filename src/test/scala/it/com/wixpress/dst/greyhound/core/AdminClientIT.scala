@@ -138,7 +138,7 @@ class AdminClientIT extends BaseTestWithSharedEnv[Env, TestResources] {
         groupOffsetsRef <- Ref.make[Map[GroupTopicPartition, PartitionOffset]](Map.empty)
         calledGroupsTopicsAfterAssignment <- CountDownLatch.make(1)
         group = s"group1-${System.currentTimeMillis}"
-        handler = RecordHandler{_: ConsumerRecord[Chunk[Byte], Chunk[Byte]] => {
+        handler = RecordHandler{(_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) => {
           kafka.adminClient.groupOffsets(Set(group)).flatMap(r => groupOffsetsRef.set(r)) *>
             calledGroupsTopicsAfterAssignment.countDown
         }}
@@ -166,7 +166,7 @@ class AdminClientIT extends BaseTestWithSharedEnv[Env, TestResources] {
         groupStateRef <- Ref.make[Option[GroupState]](None)
         calledGroupsStateAfterAssignment <- CountDownLatch.make(1)
         group = "group1"
-        handler = RecordHandler{_: ConsumerRecord[Chunk[Byte], Chunk[Byte]] => {
+        handler = RecordHandler{(_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) => {
           kafka.adminClient.groupState(Set(group)).flatMap(r => groupStateRef.set(r.get(group))) *>
             calledGroupsStateAfterAssignment.countDown
         }}

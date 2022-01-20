@@ -1,7 +1,6 @@
 package com.wixpress.dst.greyhound.future
 
 import java.util.concurrent.Executors
-
 import com.wixpress.dst.greyhound.core.metrics.GreyhoundMetrics
 import zio.blocking.Blocking
 import zio.clock.Clock
@@ -11,14 +10,14 @@ import zio.random.Random
 import zio.system.System
 import zio.{Has, Runtime}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 trait GreyhoundRuntime extends Runtime[GreyhoundRuntime.Env] {
   override val platform: Platform = Platform.default
 }
 
 object GreyhoundRuntime {
-  implicit val executionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+  implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
   type ZEnv = Clock with Console with System with Random with Blocking
 

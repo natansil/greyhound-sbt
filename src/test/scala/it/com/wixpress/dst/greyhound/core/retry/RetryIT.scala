@@ -234,7 +234,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
     for {
       TestResources(kafka, _) <- getShared
       retryConfig = ZRetryConfig.retryForPattern(RetryConfigForTopic(() => Nil, NonBlockingBackoffPolicy(Seq(1.second, 1.second, 1.seconds))))
-      handler = RecordHandler { _: ConsumerRecord[String, String] => ZIO.unit }.withDeserializers(StringSerde, StringSerde)
+      handler = RecordHandler { (_: ConsumerRecord[String, String]) => ZIO.unit }.withDeserializers(StringSerde, StringSerde)
       _ <- RecordConsumer.make(configFor(kafka, "group", retryConfig, "topic"), handler)
         .flip
         .use(t => ZIO(t === InvalidRetryConfigForPatternSubscription))
@@ -248,7 +248,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
       topic <- kafka.createRandomTopic(1)
       group <- randomGroup
       attempt <- AwaitableRef.make(0)
-      handler  = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] => attempt.update(_ + 1) *> ZIO.fail(new RuntimeException("boom!")) }
+      handler  = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) => attempt.update(_ + 1) *> ZIO.fail(new RuntimeException("boom!")) }
       retryConfig = ZRetryConfig.nonBlockingRetry(15.seconds)
       resource <- RecordConsumer.make(configFor(kafka, group, retryConfig, topic).withDrainTimeout(drainTimeout), handler).reserve
       _ <- resource.acquire
@@ -259,7 +259,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
       _ <- resource.release(Exit.unit).withTimeout(drainTimeout * 2)
       // now we start a new consumer on the retry topic directly and expect to consume the message
       consumedPayloads <- AwaitableRef.make(Seq.empty[String])
-      collectingHandler = RecordHandler { rec: ConsumerRecord[String, String] =>
+      collectingHandler = RecordHandler { (rec: ConsumerRecord[String, String]) =>
         consumedPayloads.update(_ :+ rec.value)
       }.withDeserializers(StringSerde, StringSerde)
       retryTopic = fixedRetryTopic(topic, group, 0)
@@ -291,7 +291,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
 
   private def blockResumeHandler(exceptionMessage: String,
                                  callCount: Ref[Int]) = {
-    RecordHandler { r: ConsumerRecord[String, String] =>
+    RecordHandler { (r: ConsumerRecord[String, String]) =>
       callCount.get.flatMap(count => UIO(println(s">>>> in handler: r: $r callCount before: $count"))) *>
         callCount.update(_ + 1) *>
         ZIO.when(r.value == exceptionMessage) {
@@ -303,7 +303,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
   private def failOnceOnOnePartitionHandler(firstMessageContent: String, secondPartitonContent: String,
                                             firstMessageCallCount: Ref[Int],
                                             secondPartitionCallCount: Ref[Int]) = {
-    RecordHandler { r: ConsumerRecord[String, String] =>
+    RecordHandler { (r: ConsumerRecord[String, String]) =>
       ZIO.when(r.value == firstMessageContent) {
         firstMessageCallCount.updateAndGet(_ + 1).flatMap(count => {
           if (count == 1)
@@ -319,7 +319,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
   }
 
   def failingBlockingNonBlockingRecordHandler(originalTopicCallCount: Ref[Int], retryTopicCallCount: Ref[Int], topic: String) = {
-    RecordHandler { r: ConsumerRecord[String, String] =>
+    RecordHandler { (r: ConsumerRecord[String, String]) =>
       (if (r.topic == topic)
         originalTopicCallCount.update(_ + 1)
       else
@@ -329,7 +329,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
   }
 
   private def failingRecordHandler(invocations: Ref[Int], done: Promise[Nothing, ConsumerRecord[String, String]]) =
-    RecordHandler { r : ConsumerRecord[String, String] =>
+    RecordHandler { (r : ConsumerRecord[String, String]) =>
       invocations.updateAndGet(_ + 1).flatMap { n =>
         if (n < 4) {
           println(s"failling.. $n")
@@ -342,7 +342,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
     }
 
   private def failingNonRetryableRecordHandler(originalTopicInvocations: Ref[Int]) =
-    RecordHandler { _: ConsumerRecord[String, String] =>
+    RecordHandler { (_: ConsumerRecord[String, String]) =>
       originalTopicInvocations.updateAndGet(_ + 1) *>
         ZIO.fail(NonRetriableException(new RuntimeException("Oops!")))
     }
@@ -351,7 +351,7 @@ class RetryIT extends BaseTestWithSharedEnv[Env, TestResources] {
     failingBlockingRecordHandlerWith(consumedValues, Set(originalTopic), stopFailingAfter)
 
   private def failingBlockingRecordHandlerWith[R](consumedValues: Ref[List[String]], originalTopics: Set[String], stopFailingAfter: Int = 5000) =
-    RecordHandler { r: ConsumerRecord[String, String] =>
+    RecordHandler { (r: ConsumerRecord[String, String]) =>
       UIO(println(s">>>> failingBlockingRecordHandler: r ${r}")) *>
         ZIO.when(originalTopics.contains(r.topic)) {
           consumedValues.updateAndGet(values => values :+ r.value)

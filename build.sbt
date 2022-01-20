@@ -1,8 +1,8 @@
-ThisBuild / scalafixDependencies +=
-  "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0"
-ThisBuild / scalafixDependencies += "org.scala-lang.modules" %% "scala-collection-migrations" % "2.6.0"
-addCompilerPlugin(scalafixSemanticdb)
-scalacOptions ++= List("-Yrangepos", "-P:semanticdb:synthetics:on")
+//ThisBuild / scalafixDependencies +=
+//  "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0"
+//ThisBuild / scalafixDependencies += "org.scala-lang.modules" %% "scala-collection-migrations" % "2.6.0"
+//addCompilerPlugin(scalafixSemanticdb)
+//scalacOptions ++= List("-Yrangepos", "-P:semanticdb:synthetics:on")
 
 lazy val root = project
   .in(file("."))
@@ -10,20 +10,26 @@ lazy val root = project
     name := "greyhound-2.13-sbt",
     version := "0.1.0-SNAPSHOT",
 
-    scalaVersion := "2.13.8",
+    scalaVersion := "3.1.0",
+//    scalaVersion := "2.13.8",
 //    scalaVersion := "2.12.15",
 
+    scalacOptions ++= Seq(
+      "-source:3.0-migration", "-rewrite"
+//      "-Xsource:3"
+    ),
+
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+//      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
       "com.novocode" % "junit-interface" % "0.11" % "test",
-      "org.specs2" %% "specs2-junit" %  "4.8.3" % "test",
+      ("org.specs2" %% "specs2-junit" %  "4.8.3" % "test").cross(CrossVersion.for3Use2_13),
       "dev.zio" %% "zio-test-junit" % "1.0.9" % "test",
-      "org.specs2" %% "specs2-mock" % "4.8.3" % "test",
+      ("org.specs2" %% "specs2-mock" % "4.8.3" % "test").cross(CrossVersion.for3Use2_13),
 
       "dev.zio" %% "zio" % "1.0.9",
       "dev.zio" %% "zio-streams" % "1.0.9",
       "org.apache.kafka" % "kafka-clients" % "2.4.1",
-      "org.apache.kafka" %% "kafka" % "2.4.1",
+      ("org.apache.kafka" %% "kafka" % "2.4.1").cross(CrossVersion.for3Use2_13),
       "org.apache.curator" % "curator-test" % "2.12.0",
       "com.h2database" % "h2" % "1.4.197"
     )
