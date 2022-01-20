@@ -131,7 +131,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       delayPartition1 <- Promise.make[Nothing, Unit]
       handledPartition0 <- CountDownLatch.make(messagesPerPartition)
       handledPartition1 <- CountDownLatch.make(messagesPerPartition)
-      handler = RecordHandler { record: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (record: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         record.partition match {
           case 0 => handledPartition0.countDown
           case 1 => delayPartition1.await *> handledPartition1.countDown
@@ -166,7 +166,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       messagesPerPartition = 500 // Exceeds the queue capacity
       delayPartition <- Promise.make[Nothing, Unit]
       handledPartition <- CountDownLatch.make(messagesPerPartition)
-      handler = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         delayPartition.await *> handledPartition.countDown
       }
       start <- clock.currentTime(TimeUnit.MILLISECONDS)
@@ -202,7 +202,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       handledSomeMessages <- CountDownLatch.make(someMessages)
       handledAllMessages <- CountDownLatch.make(numberOfMessages)
       handleCounter <- Ref.make[Int](0)
-      handler = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         handleCounter.update(_ + 1) *> handledSomeMessages.countDown zipParRight handledAllMessages.countDown
       }
 
@@ -233,7 +233,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
 
       ref <- Ref.make(0)
       startedHandling <- Promise.make[Nothing, Unit]
-      handler: Handler[Clock] = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler: Handler[Clock] = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         startedHandling.succeed(()) *>
           sleep(5.seconds) *>
           ref.update(_ + 1)
@@ -282,7 +282,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       group <- randomGroup
       probe <- Ref.make(Map.empty[Partition, Seq[Offset]])
       messagesPerPartition = 500
-      handler = RecordHandler { record: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (record: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         sleep(10.millis) *>
           probe.getAndUpdate(curr => curr + (record.partition -> (curr.getOrElse(record.partition, Nil) :+ record.offset)))
             .flatMap(map =>
@@ -318,7 +318,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       _ <- kafka.createTopics(Seq(topic1, topic2).map(t => TopicConfig(t, 1, 1, delete)): _*)
       group <- randomGroup
       probe <- Ref.make(Seq.empty[(Topic, Offset)])
-      handler = RecordHandler { record: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (record: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         probe.update(_ :+ (record.topic, record.offset))
       }
 
@@ -341,7 +341,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       group <- randomGroup
       handlingStarted <- Promise.make[Nothing, Unit]
       hangForever <- Promise.make[Nothing, Unit]
-      hangingHandler = RecordHandler { record: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      hangingHandler = RecordHandler { (record: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         handlingStarted.complete(ZIO.unit) *>
           hangForever.await
       }
@@ -354,7 +354,7 @@ class ConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
           consumer.resubscribe(ConsumerSubscription.topics())
       }.disconnect.timeoutFail(new TimeoutException("timed out waiting for consumer 0"))(10.seconds)
       consumed <- AwaitableRef.make(Seq.empty[String])
-      handler = RecordHandler { record: ConsumerRecord[String, String] =>
+      handler = RecordHandler { (record: ConsumerRecord[String, String]) =>
         consumed.update(_ :+ record.value)
       }.withDeserializers(StringSerde, StringSerde)
 

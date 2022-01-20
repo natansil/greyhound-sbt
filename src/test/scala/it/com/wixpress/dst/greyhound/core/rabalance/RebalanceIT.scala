@@ -37,7 +37,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
       invocations <- Ref.make(0)
       handledAll <- CountDownLatch.make(allMessages)
       handledSome <- CountDownLatch.make(someMessages)
-      handler = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         invocations.update(_ + 1) *>
           handledSome.countDown *>
           handledAll.countDown
@@ -72,14 +72,14 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
 
         _ <- metricsQueue.take.flatMap {
           case m: PartitionsRevoked => UIO(println(s">>>===>>> [${m.clientId}] $m"))
-          case d: InterruptibleRetryMetric if d.interrupted => UIO(println(s">>>===>>> [interrupted: ${d.interrupted}] $d")) *> retryInterrupted.succeed()
+          case d: InterruptibleRetryMetric if d.interrupted => UIO(println(s">>>===>>> [interrupted: ${d.interrupted}] $d")) *> retryInterrupted.succeed(())
           case _ => ZIO.unit
         }.repeat(Schedule.forever).fork
 
         produce = producer.produce(ProducerRecord(topic, Chunk.empty))
 
         keepConsumersAlive <- Promise.make[Nothing, Unit]
-        handler = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+        handler = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
           UIO(println(s">>>===>>> boom!")) *> ZIO.fail(new RuntimeException("boom!"))
         }
         consumer = RecordConsumer.make(configFor(topic, group, kafka).copy(
@@ -148,7 +148,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
   object ConsumerEx {
     def consumer(clientId: String, dummy: String, group: String, kafka: ManagedKafka, body: => RIO[Env, Unit]) =
       RecordConsumer.make(configFor(dummy, group, kafka).copy(offsetReset = OffsetReset.Earliest, clientId = clientId),
-        RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] => body }
+        RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) => body }
       )
 
     def createAndRun(count: Int, dummy: String, group: String, kafka: ManagedKafka)(f:  Seq[ConsumerEx] => RIO[Env, Any]) = for {
@@ -188,7 +188,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
       latch <- CountDownLatch.make(messagesPerPartition * partitions)
       blocker <- Promise.make[Nothing, Unit]
       semaphore <- Semaphore.make(1)
-      handler1 = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler1 = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         semaphore.withPermit(blocker.await *> latch.countDown)
       }
 
@@ -210,7 +210,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
           producer.produce(ProducerRecord(topic, Chunk.empty, partition = Some(1)))
       }
 
-      handler2 = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler2 = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         latch.countDown
       }
       config2 = configFor(topic, group, kafka).copy(clientId = "client-2")

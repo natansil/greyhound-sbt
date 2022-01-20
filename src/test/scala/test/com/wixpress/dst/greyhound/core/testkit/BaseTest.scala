@@ -98,7 +98,7 @@ trait BaseTestWithSharedEnv[R <: Has[_], SHARED] extends SpecificationWithJUnit 
           (implicit ev: AsResult[A], ev3: zio.Tag[SHARED]): AsResult[ZIO[R1, E, A]] = new AsResult[ZIO[R1, E, A]] {
     override def asResult(t: => ZIO[R1, E, A]): Result = {
       runtime.unsafeRunSync(
-        env.use { e: R =>
+        env.use { (e: R) =>
           val sharedEnv: SHARED = sharedRef.get
             .map(_._1)
             .getOrElse(throw new RuntimeException("shared environment not initialized"))
