@@ -10,7 +10,7 @@ lazy val root = project
     name := "greyhound-2.13-sbt",
     version := "0.1.0-SNAPSHOT",
 
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.7",
 //    scalaVersion := "2.12.15",
 
     libraryDependencies ++= Seq(
