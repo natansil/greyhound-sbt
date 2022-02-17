@@ -72,7 +72,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
 
         _ <- metricsQueue.take.flatMap {
           case m: PartitionsRevoked => UIO(println(s">>>===>>> [${m.clientId}] $m"))
-          case d: InterruptibleRetryMetric if d.interrupted => UIO(println(s">>>===>>> [interrupted: ${d.interrupted}] $d")) *> retryInterrupted.succeed()
+          case d: InterruptibleRetryMetric if d.interrupted => UIO(println(s">>>===>>> [interrupted: ${d.interrupted}] $d")) *> retryInterrupted.succeed(())
           case _ => ZIO.unit
         }.repeat(Schedule.forever).fork
 
@@ -147,7 +147,7 @@ class RebalanceIT extends BaseTestWithSharedEnv[Env, TestResources] {
 
   object ConsumerEx {
     def consumer(clientId: String, dummy: String, group: String, kafka: ManagedKafka, body: => RIO[Env, Unit]) =
-      RecordConsumer.make(configFor(dummy, group, kafka).copy(offsetReset = OffsetReset.Earliest, clientId = clientId),
+      RecordConsumer.make[Env, Throwable](configFor(dummy, group, kafka).copy(offsetReset = OffsetReset.Earliest, clientId = clientId),
         RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] => body }
       )
 
