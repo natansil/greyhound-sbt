@@ -1,8 +1,8 @@
 ThisBuild / scalafixDependencies +=
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0"
 ThisBuild / scalafixDependencies += "org.scala-lang.modules" %% "scala-collection-migrations" % "2.6.0"
-addCompilerPlugin(scalafixSemanticdb)
-scalacOptions ++= List("-Yrangepos", "-P:semanticdb:synthetics:on")
+//addCompilerPlugin(scalafixSemanticdb)
+//scalacOptions ++= List("-Yrangepos", "-P:semanticdb:synthetics:on")
 
 lazy val root = project
   .in(file("."))
