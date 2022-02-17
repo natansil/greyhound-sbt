@@ -16,7 +16,7 @@ class NonBlockingRetryHelperTest  extends BaseTest[TestEnvironment] {
   "NonBlockingRetryHelper" should {
     "retryTopicsFor should not contain original topic" in {
       val topic = "some-topic"
-      NonBlockingRetryHelper("group",None).retryTopicsFor(topic) must not(contain(topic))
+      NonBlockingRetryHelper("group",None).retryTopicsFor(topic) must not(contain[String](topic))
     }
     
     "retryDecision should produce add a 'current RetryAttempt' header to ProducerRecord" in {

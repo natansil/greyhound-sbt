@@ -162,7 +162,7 @@ class BatchedConsumerIT extends BaseTestWithSharedEnv[Env, TestResources] {
       handledSomeMessages <- CountDownLatch.make(someMessages)
       handledAllMessages <- CountDownLatch.make(numberOfMessages)
       handleCounter <- Ref.make[Int](0)
-      handler = BatchRecordHandler { recs: ConsumerRecordBatch[Chunk[Byte], Chunk[Byte]] =>
+      handler = BatchRecordHandler { (recs: ConsumerRecordBatch[Chunk[Byte], Chunk[Byte]]) =>
         UIO(println(s"consumed ${recs.size} messages for partition ${recs.records.head.partition}")) *>
         handleCounter.update(_ + recs.size) *> handledSomeMessages.countDown(recs.size) zipParRight handledAllMessages.countDown(recs.size)
       }

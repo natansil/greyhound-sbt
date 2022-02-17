@@ -36,7 +36,7 @@ object AdminClient {
           errors.get(config.name).map(maybeError =>
             maybeError.map(error => Future.failed(error)).getOrElse(Future.unit)
           ).getOrElse(Future.unit)
-        }
+        }(executionContext)
 
       override def numberOfBrokers: Future[Int] =
         runtime.unsafeRunToFuture(

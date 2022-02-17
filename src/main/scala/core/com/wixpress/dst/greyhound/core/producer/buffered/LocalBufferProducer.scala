@@ -90,7 +90,7 @@ object LocalBufferProducer {
           case 0 => state.get.flatMap(state => STM.check(state.enqueued > 0 || !state.running)).commit.delay(100.millis) // this waits until there are more messages in buffer
           case x if x <= 10 => sleep(10.millis)
         })
-        .catchAllCause { e: Cause[Throwable] =>
+        .catchAllCause { (e: Cause[Throwable]) =>
           report(LocalBufferProducerCaughtError(e.squashTrace))
         })
         .repeatWhileM(_ => state.get.commit.map(s => s.running || s.enqueued > 0))

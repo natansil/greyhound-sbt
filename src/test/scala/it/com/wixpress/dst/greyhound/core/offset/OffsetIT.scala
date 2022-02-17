@@ -32,7 +32,7 @@ class OffsetIT extends BaseTestWithSharedEnv[Env, TestResources] {
       someMessages = 16
       handledAllMessages <- CountDownLatch.make(numberOfMessages)
       handledSomeMessages <- CountDownLatch.make(someMessages)
-      handler = RecordHandler { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = RecordHandler { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         handledSomeMessages.countDown zipParRight handledAllMessages.countDown
       }
 

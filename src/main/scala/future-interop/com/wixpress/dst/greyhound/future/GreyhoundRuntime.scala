@@ -18,21 +18,21 @@ trait GreyhoundRuntime extends Runtime[GreyhoundRuntime.Env] {
 }
 
 object GreyhoundRuntime {
-  implicit val executionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+  implicit val executionContext: concurrent.ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
   type ZEnv = Clock with Console with System with Random with Blocking
 
-  val zenv = Has.allOf(
+  val zenv: Has[Clock.Service] with Has[Console.Service] with Has[System.Service] with Has[Random.Service] with Has[Blocking.Service] = Has.allOf[Clock.Service, Console.Service, System.Service, Random.Service, Blocking.Service](
     Clock.Service.live,
     Console.Service.live,
     System.Service.live,
     Random.Service.live,
     Blocking.Service.live
-  )
+  )(izumi.reflect.Tag.tagFromTagMacro, izumi.reflect.Tag.tagFromTagMacro, izumi.reflect.Tag.tagFromTagMacro, izumi.reflect.Tag.tagFromTagMacro, izumi.reflect.Tag.tagFromTagMacro)
 
   type Env = ZEnv with GreyhoundMetrics
 
-  val Live = GreyhoundRuntimeBuilder().build
+  val Live: GreyhoundRuntime = GreyhoundRuntimeBuilder().build
 }
 
 case class GreyhoundRuntimeBuilder(metricsReporter: GreyhoundMetrics.Service = GreyhoundMetrics.Service.Live) {
@@ -41,6 +41,6 @@ case class GreyhoundRuntimeBuilder(metricsReporter: GreyhoundMetrics.Service = G
 
   def build: GreyhoundRuntime =
     new GreyhoundRuntime {
-      override val environment = GreyhoundRuntime.zenv ++ Has(metricsReporter)
+      override val environment: Has[Clock.Service] with Has[Console.Service] with Has[System.Service] with Has[Random.Service] with Has[Blocking.Service] with Has[GreyhoundMetrics.Service] = GreyhoundRuntime.zenv ++ Has.apply[GreyhoundMetrics.Service](metricsReporter)(izumi.reflect.Tag.tagFromTagMacro)
     }
 }

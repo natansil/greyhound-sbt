@@ -41,7 +41,7 @@ class DispatcherTest extends BaseTest[Env with TestClock with TestMetrics] {
 
     run(for {
       latch <- CountDownLatch.make(partitions)
-      slowHandler = { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      slowHandler = { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         clock.sleep(1.second) *> latch.countDown
       }
       ref <- Ref.make[Map[TopicPartition, ShutdownPromise]](Map.empty)
@@ -141,7 +141,7 @@ class DispatcherTest extends BaseTest[Env with TestClock with TestMetrics] {
       ref <- Ref.make(0)
       workersShutdownRef <- Ref.make[Map[TopicPartition, ShutdownPromise]](Map.empty)
       promise <- Promise.make[Nothing, Unit]
-      handler = { _: Record =>
+      handler = { (_: Record) =>
         clock.sleep(1.second) *>
           ref.update(_ + 1) *>
           promise.succeed(())
@@ -163,7 +163,7 @@ class DispatcherTest extends BaseTest[Env with TestClock with TestMetrics] {
       ref <- Ref.make(0)
       workersShutdownRef <- Ref.make[Map[TopicPartition, ShutdownPromise]](Map.empty)
       promise <- Promise.make[Nothing, Unit]
-      handler = { _: ConsumerRecord[Chunk[Byte], Chunk[Byte]] =>
+      handler = { (_: ConsumerRecord[Chunk[Byte], Chunk[Byte]]) =>
         ref.update(_ + 1) *> promise.succeed(())
       }
       dispatcher <- Dispatcher.make("group", "clientId", handler, lowWatermark, highWatermark,
